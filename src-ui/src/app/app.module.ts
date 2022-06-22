@@ -64,6 +64,7 @@ import { ApiVersionInterceptor } from './interceptors/api-version.interceptor';
 import { ColorSliderModule } from 'ngx-color/slider';
 import { ColorComponent } from './components/common/input/color/color.component';
 import { DocumentAsnComponent } from './components/document-asn/document-asn.component';
+import { DocumentCommentComponent } from './components/document-comment/document-comment.component';
 
 import localeFr from '@angular/common/locales/fr';
 import localeNl from '@angular/common/locales/nl';
@@ -142,7 +143,8 @@ registerLocaleData(localeLb)
     CustomDatePipe,
     DateComponent,
     ColorComponent,
-    DocumentAsnComponent
+    DocumentAsnComponent,
+    DocumentCommentComponent
   ],
   imports: [
     BrowserModule,

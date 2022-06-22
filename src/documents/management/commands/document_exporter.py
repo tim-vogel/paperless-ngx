@@ -6,14 +6,14 @@ import time
 
 import tqdm
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core import serializers
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from filelock import FileLock
 
 from documents.models import Document, Correspondent, Tag, DocumentType, \
-    SavedView, SavedViewFilterRule
+    SavedView, SavedViewFilterRule, Comment
 from documents.settings import EXPORTER_FILE_NAME, EXPORTER_THUMBNAIL_NAME, \
     EXPORTER_ARCHIVE_NAME
 from paperless.db import GnuPG
@@ -115,6 +115,9 @@ class Command(BaseCommand):
             manifest += document_manifest
 
             manifest += json.loads(serializers.serialize(
+                "json", Comment.objects.all()))
+
+            manifest += json.loads(serializers.serialize(
                 "json", MailAccount.objects.all()))
 
             manifest += json.loads(serializers.serialize(
@@ -125,6 +128,9 @@ class Command(BaseCommand):
 
             manifest += json.loads(serializers.serialize(
                 "json", SavedViewFilterRule.objects.all()))
+
+            manifest += json.loads(serializers.serialize(
+                "json", Group.objects.all()))
 
             manifest += json.loads(serializers.serialize(
                 "json", User.objects.all()))

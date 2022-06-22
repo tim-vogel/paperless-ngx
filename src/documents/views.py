@@ -1,3 +1,4 @@
+from crypt import methods
 import logging
 import os
 import tempfile
@@ -9,7 +10,7 @@ from time import mktime
 from django.conf import settings
 from django.db.models import Count, Max, Case, When, IntegerField
 from django.db.models.functions import Lower
-from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseNotFound, Http404
 from django.utils.translation import get_language
 from django.views.decorators.cache import cache_control
 from django.views.generic import TemplateView
@@ -47,7 +48,7 @@ from .filters import (
     DocumentTypeFilterSet
 )
 from .matching import match_correspondents, match_tags, match_document_types
-from .models import Correspondent, Document, Tag, DocumentType, SavedView
+from .models import Correspondent, Document, Tag, DocumentType, SavedView, Comment
 from .parsers import get_parser_class_for_mime_type
 from .serialisers import (
     CorrespondentSerializer,
@@ -326,6 +327,67 @@ class DocumentViewSet(RetrieveModelMixin,
                 pk, request, "attachment")
         except (FileNotFoundError, Document.DoesNotExist):
             raise Http404()
+    
+    def getComments(self, doc):
+        logger.info(">>> getComments")
+        return {
+            "is_comments_enabled": settings.PAPERLESS_COMMENTS_ENABLED,
+            "comments": [
+                {
+                    "id":c.id, 
+                    "comment":c.comment, 
+                    "created":c.created, 
+                    "user":{ 
+                        "id":c.user.id, 
+                        "username": c.user.username,
+                        "firstname":c.user.first_name, 
+                        "lastname":c.user.last_name
+                    }
+                } for c in Comment.objects.filter(document=doc).order_by('-created')
+            ]
+        };
+
+    @action(methods=['get', 'post', 'delete'], detail=True)
+    def comments(self, request, pk=None):
+        if settings.PAPERLESS_COMMENTS_ENABLED != True:
+            return HttpResponseNotAllowed("comment function is disabled")
+            
+        try:
+            doc = Document.objects.get(pk=pk)
+        except Document.DoesNotExist:
+            raise Http404()
+
+        currentUser = request.user;
+
+        if request.method == 'GET': 
+            try:
+                return Response(self.getComments(doc));
+            except Exception as e:
+                return Response({"error": str(e)});
+        elif request.method == 'POST':
+            try:
+                c = Comment.objects.create(
+                    document = doc,
+                    comment=request.data["payload"],
+                    user=currentUser
+                );
+                c.save();
+                
+                return Response(self.getComments(doc));
+            except Exception as e:
+                return Response({
+                    "error": str(e)
+                });
+        elif request.method == 'DELETE':
+            comment = Comment.objects.get(id=int(request.GET.get("commentId")));
+            comment.delete();
+            return Response(self.getComments(doc));
+            
+        
+        return Response({
+            "error": "error"
+        });
+
 
 
 class SearchResultSerializer(DocumentSerializer):
@@ -624,3 +686,32 @@ class BulkDownloadView(GenericAPIView):
                 "attachment", "documents.zip")
 
             return response
+
+class EnvironmentView(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+        if 'name' in request.query_params:
+            name = request.query_params['name']
+        else:
+            return HttpResponseBadRequest("name required")
+        
+        if(name not in settings.PAPERLESS_FRONTEND_ALLOWED_ENVIRONMENTS and settings.PAPERLESS_DISABLED_FRONTEND_ENVIRONMENT_CHECK == False):
+            return HttpResponseNotAllowed("environment not allowed to request")
+
+        value = None
+        try:
+            value = getattr(settings, name)
+        except:
+            try:
+                value = os.getenv(name)
+            except:
+                value = None
+                
+        if value == None: 
+            return HttpResponseNotFound("environment not found")    
+
+        return Response({
+            "value": str(value)
+        });

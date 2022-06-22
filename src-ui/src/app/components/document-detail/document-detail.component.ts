@@ -21,6 +21,7 @@ import { TextComponent } from '../common/input/text/text.component';
 import { SettingsService, SETTINGS_KEYS } from 'src/app/services/settings.service';
 import { PaperlessDocumentSuggestions } from 'src/app/data/paperless-document-suggestions';
 import { FILTER_FULLTEXT_MORELIKE } from 'src/app/data/filter-rule-type';
+import { EnvironmentService } from 'src/app/services/rest/environment.service';
 
 @Component({
   selector: 'app-document-detail',
@@ -65,6 +66,8 @@ export class DocumentDetailComponent implements OnInit {
   previewCurrentPage: number = 1
   previewNumPages: number = 1
 
+  isCommentsEnabled:boolean = false
+
   constructor(
     private documentsService: DocumentService,
     private route: ActivatedRoute,
@@ -76,7 +79,8 @@ export class DocumentDetailComponent implements OnInit {
     private documentListViewService: DocumentListViewService,
     private documentTitlePipe: DocumentTitlePipe,
     private toastService: ToastService,
-    private settings: SettingsService) { }
+    private settings: SettingsService,
+    private environment: EnvironmentService) { }
 
   get useNativePdfViewer(): boolean {
     return this.settings.get(SETTINGS_KEYS.USE_NATIVE_PDF_VIEWER)
@@ -123,6 +127,11 @@ export class DocumentDetailComponent implements OnInit {
       this.suggestions = result
     }, error => {
       this.suggestions = null
+    })
+    this.environment.get("PAPERLESS_COMMENTS_ENABLED").subscribe(result => {
+      this.isCommentsEnabled = (result.value.toString().toLowerCase() === "true"?true:false);
+    }, error => {
+      this.isCommentsEnabled = false;
     })
     this.title = this.documentTitlePipe.transform(doc.title)
     this.documentForm.patchValue(doc)

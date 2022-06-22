@@ -25,7 +25,8 @@ from documents.views import (
     SavedViewViewSet,
     BulkEditView,
     SelectionDataView,
-    BulkDownloadView
+    BulkDownloadView,
+    EnvironmentView
 )
 from paperless.views import FaviconView
 
@@ -71,6 +72,8 @@ urlpatterns = [
     re_path(r"^favicon.ico$", FaviconView.as_view(), name="favicon"),
 
     re_path(r"admin/", admin.site.urls),
+
+    re_path(r"environment/", EnvironmentView.as_view()),
 
     re_path(r"^fetch/", include([
         re_path(
