@@ -1,4 +1,4 @@
-<div *ngIf="commentsFrame">
+<div *ngIf="comments">
     <form [formGroup]='commentForm'>
         <div class="form-group">
             <textarea class="form-control" id="newcomment" rows="5" formControlName='newcomment'></textarea>
@@ -6,7 +6,7 @@
         <button type="button" class="btn btn-primary" i18n [disabled]="networkActive" (click)="addComment()">add comment</button>&nbsp;
     </form>
     <hr>
-    <div *ngFor="let comment of commentsFrame.comments; trackBy: byId" [disableRipple]="true" class="card border-bg-primary bg-primary mb-3 comment-card" [attr.comment-id]="comment.id">
+    <div *ngFor="let comment of comments; trackBy: byId" [disableRipple]="true" class="card border-bg-primary bg-primary mb-3 comment-card" [attr.comment-id]="comment.id">
         <div class="d-flex card-header comment-card-header text-white justify-content-between">
             <span>{{comment?.user?.firstname}} {{comment?.user?.lastname}} ({{comment?.user?.username}}) - {{ comment?.created | customDate}}</span>
             <span>

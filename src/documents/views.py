@@ -329,23 +329,19 @@ class DocumentViewSet(RetrieveModelMixin,
             raise Http404()
     
     def getComments(self, doc):
-        logger.info(">>> getComments")
-        return {
-            "is_comments_enabled": settings.PAPERLESS_COMMENTS_ENABLED,
-            "comments": [
-                {
-                    "id":c.id, 
-                    "comment":c.comment, 
-                    "created":c.created, 
-                    "user":{ 
-                        "id":c.user.id, 
-                        "username": c.user.username,
-                        "firstname":c.user.first_name, 
-                        "lastname":c.user.last_name
-                    }
-                } for c in Comment.objects.filter(document=doc).order_by('-created')
-            ]
-        };
+        return [
+            {
+                "id":c.id, 
+                "comment":c.comment, 
+                "created":c.created, 
+                "user":{ 
+                    "id":c.user.id, 
+                    "username": c.user.username,
+                    "firstname":c.user.first_name, 
+                    "lastname":c.user.last_name
+                }
+            } for c in Comment.objects.filter(document=doc).order_by('-created')
+        ];
 
     @action(methods=['get', 'post', 'delete'], detail=True)
     def comments(self, request, pk=None):

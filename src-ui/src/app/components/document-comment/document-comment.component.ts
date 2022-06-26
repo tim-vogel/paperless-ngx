@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { DocumentDetailComponent } from 'src/app/components/document-detail/document-detail.component';
-import { PaperlessDocumentCommentFrame } from 'src/app/data/paperless-document-comment-frame';
 import { DocumentCommentService } from 'src/app/services/rest/document-comment.service';
-
 import { PaperlessDocumentComment } from 'src/app/data/paperless-document-comment';
 
 import { take } from 'rxjs/operators';
@@ -15,7 +13,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 })
 export class DocumentCommentComponent implements OnInit {
 
-  commentsFrame:PaperlessDocumentCommentFrame;
+  comments:PaperlessDocumentComment[];
   networkActive = false;
   documentId: number;
   commentForm: FormGroup = new FormGroup({
@@ -34,19 +32,16 @@ export class DocumentCommentComponent implements OnInit {
   async ngOnInit(): Promise<any> {
     try {
       this.documentId = this.documentDetailComponent.documentId;
-      this.commentsFrame = await this.documentCommentService.getComments(this.documentId).pipe(take(1)).toPromise();
+      this.comments= await this.documentCommentService.getComments(this.documentId).pipe(take(1)).toPromise();
     } catch(err){
-      this.commentsFrame = {
-        is_comments_enabled: false,
-        comments: []
-      }
+      this.comments = [];
     }
   }
 
   addComment(){
     this.networkActive = true
     this.documentCommentService.addComment(this.documentId, this.commentForm.get("newcomment").value).subscribe(result => {
-      this.commentsFrame = result;
+      this.comments = result;
       this.commentForm.get("newcomment").reset();
       this.networkActive = false;
     }, error => {
@@ -58,10 +53,10 @@ export class DocumentCommentComponent implements OnInit {
     let parent = event.target.parentElement.closest('div[comment-id]');
     if(parent){
       this.documentCommentService.deleteComment(this.documentId, parseInt(parent.getAttribute("comment-id"))).subscribe(result => {
-        let deletedCommentCard = event.target.parentElement.closest('div.comment-card')
-        deletedCommentCard.style.transition = "all .5s";
-        deletedCommentCard.remove();
-
+        //let deletedCommentCard = event.target.parentElement.closest('div.comment-card')
+        //deletedCommentCard.style.transition = "all .5s";
+        //deletedCommentCard.remove();
+        this.comments = result;
         this.networkActive = false;
       }, error => {
         this.networkActive = false;
